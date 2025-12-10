@@ -39,3 +39,19 @@ buildAdminShell.ps1
 docker run -it -v '.\:/app' --rm  "adminpwsh:latest"
 ```
 
+### `prepareDockerfile.ps1` options
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `-modules` | Additional PowerShell modules to install. Invalid names are ignored and duplicates are skipped. | `@()` |
+| `-dockerfilePath` | Custom output path for the generated Dockerfile. | `Dockerfile` in repo root |
+| `-skipModuleAz` | Do not install the Az module (also prevents automatic Bicep install). | `False` |
+| `-skipModuleGraph` | Skip installing Microsoft.Graph. | `False` |
+| `-skipModuleTeams` | Skip installing MicrosoftTeams. | `False` |
+| `-skipModuleExchange` | Skip installing ExchangeOnlineManagement. | `False` |
+| `-skipModuleSharePoint` | Skip installing Microsoft.Online.SharePoint.PowerShell. | `False` |
+| `-skipModulePnP` | Skip installing PnP.PowerShell. | `False` |
+| `-skipOpentofuInstallation` | Do not install OpenTofu/Terraform tooling. | `False` |
+
+By default all common admin modules plus Bicep and OpenTofu are present; combine the switches above to trim the image or focus on the tooling you need.
+
