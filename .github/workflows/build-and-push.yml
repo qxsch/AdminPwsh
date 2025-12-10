@@ -12,9 +12,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_TAGS: |
-    ghcr.io/${{ github.repository }}:latest
-    ghcr.io/${{ github.repository }}:${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -40,18 +37,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare image tags
+        id: image-tags
+        run: |
+          set -euo pipefail
+
+          image="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+
+          {
+            echo 'tags<<EOF'
+            echo "${image}:latest"
+            echo "${image}:${GITHUB_SHA}"
+            echo 'EOF'
+          } >> "${GITHUB_OUTPUT}"
+
       - name: Build and push image
         id: build-and-push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_TAGS }}
+          tags: ${{ steps.image-tags.outputs.tags }}
 
       - name: Sign GHCR image with cosign
         if: success()
         env:
-          TAGS: ${{ env.IMAGE_TAGS }}
+          TAGS: ${{ steps.image-tags.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: |
           set -euo pipefail
