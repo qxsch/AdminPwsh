@@ -27,8 +27,8 @@ docker run -it -v '.\:/app' --rm  "ghcr.io/qxsch/adminpwsh:latest"
 
 Create the Dockerfile and build the image with the following commands:
 ```pwsh
-# install additional modules and skip opentofu installation
-prepareDockerfile.ps1 -modules @( "additional.module", "another.module" ) -skipOpentofuInstallation
+# example: install additional modules
+prepareDockerfile.ps1 -modules @( "additional.module", "another.module" )
 
 # modify the Dockerfile as needed
 
