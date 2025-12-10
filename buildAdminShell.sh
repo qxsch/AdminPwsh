@@ -1,4 +1,4 @@
 #!/bin/bash
 
 echo "Building Docker image..."
-docker build -t "pwsh:latest" -f Dockerfile .
+docker build -t "adminpwsh:latest" -f Dockerfile .

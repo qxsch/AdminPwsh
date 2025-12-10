@@ -21,3 +21,21 @@ docker run -it -v '.\:/app' --rm  "ghcr.io/qxsch/adminpwsh:latest"
   * [MicrosoftTeams Module](https://learn.microsoft.com/powershell/module/teams/)
   * [SharePoint Online Management Shell](https://learn.microsoft.com/en-us/powershell/sharepoint/sharepoint-online/connect-sharepoint-online)
   * [PNP.Powershell Module](https://pnp.github.io/powershell/)
+
+
+## Customization - Build your own image
+
+Create the Dockerfile and build the image with the following commands:
+```pwsh
+# install additional modules and skip opentofu installation
+prepareDockerfile.ps1 -modules @( "additional.module", "another.module" ) -skipOpentofuInstallation
+
+# modify the Dockerfile as needed
+
+# build the image
+buildAdminShell.ps1
+
+# test the newly created image
+docker run -it -v '.\:/app' --rm  "adminpwsh:latest"
+```
+
