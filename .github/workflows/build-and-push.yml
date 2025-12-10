@@ -77,45 +77,4 @@ jobs:
             echo "Signing ${tag}"
             cosign sign --yes "${tag}@${DIGEST}"
           done <<< "${TAGS}"
-
-      - name: Prune older GHCR images
-        if: success()
-        env:
-          GH_TOKEN: ${{ secrets.GHCR_PAT }}
-          OWNER: ${{ github.repository_owner }}
-          REPOSITORY: ${{ github.repository }}
-          KEEP: 10
-        run: |
-          set -euo pipefail
-
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "Secret GHCR_PAT is not configured; skipping image pruning."
-            exit 0
-          fi
-
-          owner_type=$(gh api -H "Accept: application/vnd.github+json" "repos/${REPOSITORY}" --jq '.owner.type')
-          if [ "${owner_type}" = "Organization" ]; then
-            API_ROOT="orgs"
-          else
-            API_ROOT="users"
-          fi
-
-          IMAGE=$(echo "${REPOSITORY##*/}" | tr '[:upper:]' '[:lower:]')
-
-          mapfile -t version_ids < <(
-            gh api --paginate -H "Accept: application/vnd.github+json" \
-            "/${API_ROOT}/${OWNER}/packages/container/${IMAGE}/versions" | jq '.[].id'
-          )
-
-          if [ "${#version_ids[@]}" -le "${KEEP}" ]; then
-            echo "Found ${#version_ids[@]} image versions; nothing to delete."
-            exit 0
-          fi
-
-          for version_id in "${version_ids[@]:KEEP}"; do
-            echo "Deleting GHCR image version ${version_id}"
-            gh api --method DELETE -H "Accept: application/vnd.github+json" \
-              "/${API_ROOT}/${OWNER}/packages/container/${IMAGE}/versions/${version_id}"
-          done
-
-          echo "Kept the latest ${KEEP} GHCR image versions."
+ 
