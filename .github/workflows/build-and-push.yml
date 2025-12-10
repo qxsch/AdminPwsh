@@ -1,0 +1,110 @@
+name: Build and Push Docker Image
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAGS: |
+    ghcr.io/${{ github.repository }}:latest
+    ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20
+        with:
+          cosign-release: v2.2.4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: build-and-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_TAGS }}
+
+      - name: Sign GHCR image with cosign
+        if: success()
+        env:
+          TAGS: ${{ env.IMAGE_TAGS }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DIGEST}" ]; then
+            echo "Image digest missing; cannot sign."
+            exit 1
+          fi
+
+          while IFS= read -r tag; do
+            [ -z "${tag}" ] && continue
+            echo "Signing ${tag}"
+            cosign sign --yes "${tag}@${DIGEST}"
+          done <<< "${TAGS}"
+
+      - name: Prune older GHCR images
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GHCR_PAT }}
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+          KEEP: 10
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "Secret GHCR_PAT is not configured; skipping image pruning."
+            exit 0
+          fi
+
+          owner_type=$(gh api -H "Accept: application/vnd.github+json" "repos/${REPOSITORY}" --jq '.owner.type')
+          if [ "${owner_type}" = "Organization" ]; then
+            API_ROOT="orgs"
+          else
+            API_ROOT="users"
+          fi
+
+          IMAGE=$(echo "${REPOSITORY##*/}" | tr '[:upper:]' '[:lower:]')
+
+          mapfile -t version_ids < <(
+            gh api --paginate -H "Accept: application/vnd.github+json" \
+            "/${API_ROOT}/${OWNER}/packages/container/${IMAGE}/versions" | jq '.[].id'
+          )
+
+          if [ "${#version_ids[@]}" -le "${KEEP}" ]; then
+            echo "Found ${#version_ids[@]} image versions; nothing to delete."
+            exit 0
+          fi
+
+          for version_id in "${version_ids[@]:KEEP}"; do
+            echo "Deleting GHCR image version ${version_id}"
+            gh api --method DELETE -H "Accept: application/vnd.github+json" \
+              "/${API_ROOT}/${OWNER}/packages/container/${IMAGE}/versions/${version_id}"
+          done
+
+          echo "Kept the latest ${KEEP} GHCR image versions."
