@@ -4,6 +4,11 @@
 
 You can easily run administrative Powershell scripts in a containerized environment.
 
+This gives you 2 main benefits:
+ * No installation and maintenance of modules on your host system required
+ * Isolation from your host system (Credentials are kept in the container session only --rm esures no leftovers)
+
+Use the following command to start an admin powershell:
 ```sh
 docker run -it -v '.\:/app' --rm  "ghcr.io/qxsch/adminpwsh:latest"
 ```
@@ -22,6 +27,24 @@ docker run -it -v '.\:/app' --rm  "ghcr.io/qxsch/adminpwsh:latest"
   * [SharePoint Online Management Shell](https://learn.microsoft.com/en-us/powershell/sharepoint/sharepoint-online/connect-sharepoint-online)
   * [PNP.Powershell Module](https://pnp.github.io/powershell/)
 
+
+## Helpful function to put into your profile
+Put the following content into your [Powershell Profile](https://learn.microsoft.com/en-us/powershell/scripting/learn/shell/creating-profiles?view=powershell-7.5):
+```pwsh
+function AdminPwsh {
+    param (
+        [string] $Directory = (Get-Location)
+    )
+    $Directory = (Resolve-Path -Path $Directory -ErrorAction Stop).Path
+    if(-not (Test-Path -Path $Directory -PathType Container)) {
+        throw "The specified path '$Directory' is not a valid directory."
+    }
+    
+    $mountPath = ( $Directory + ":/app" )
+    Write-Host "Starting AdminPwsh container with mounted directory: $Directory"
+    docker run -it -v "$mountPath" --rm  "ghcr.io/qxsch/adminpwsh:latest"
+}
+```
 
 ## Customization - Build your own image
 
