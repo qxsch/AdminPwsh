@@ -69,3 +69,16 @@ jobs:
           done <<< "${version_rows}"
 
           echo "Deleted ${deleted} version(s); kept ${preserved} newer version(s)."
+
+          cat <<EOF >>"${GITHUB_STEP_SUMMARY}"
+### Container Cleanup Summary
+- Repository: ${repository_name}
+- Cutoff (UTC): ${cutoff_readable}
+
+| Result | Count |
+| --- | --- |
+| Deleted versions | ${deleted} |
+| Preserved versions | ${preserved} |
+
+> Deleted ${deleted} version(s); kept ${preserved} newer version(s).
+EOF

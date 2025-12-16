@@ -34,7 +34,8 @@ Put the following content into your [Powershell Profile](https://learn.microsoft
 ```pwsh
 function AdminPwsh {
     param (
-        [string] $Directory = (Get-Location)
+        [string] $Directory = (Get-Location),
+        [switch] $StartBash
     )
     $Directory = (Resolve-Path -Path $Directory -ErrorAction Stop).Path
     if(-not (Test-Path -Path $Directory -PathType Container)) {
@@ -42,8 +43,14 @@ function AdminPwsh {
     }
     
     $mountPath = ( $Directory + ":/app" )
-    Write-Host "Starting AdminPwsh container with mounted directory: $Directory"
-    docker run -it -v "$mountPath" --rm  "ghcr.io/qxsch/adminpwsh:latest"
+    if($StartBash) {
+        Write-Host "Starting AdminBash container with mounted directory: $Directory"
+        docker run -it -v "$mountPath" --rm  "ghcr.io/qxsch/adminpwsh:latest" /bin/bash
+    }
+    else {
+        Write-Host "Starting AdminPwsh container with mounted directory: $Directory"
+        docker run -it -v "$mountPath" --rm  "ghcr.io/qxsch/adminpwsh:latest"
+    }
 }
 ```
 
