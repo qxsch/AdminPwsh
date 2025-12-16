@@ -93,6 +93,7 @@ docker run -it -v '.\:/app' --rm  "adminpwsh:latest"
 | `-skipModuleSharePoint` | Skip installing Microsoft.Online.SharePoint.PowerShell. | `False` |
 | `-skipModulePnP` | Skip installing PnP.PowerShell. | `False` |
 | `-skipOpentofuInstallation` | Do not install OpenTofu/Terraform tooling. | `False` |
+| `-skipAzureCliInstallation` | Do not install Azure CLI tooling. | `False` |
 
 By default all common admin modules plus Bicep and OpenTofu are present; combine the switches above to trim the image or focus on the tooling you need.
 
