@@ -1,0 +1,69 @@
+name: Cleanup Container Registry
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prune old container versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+          RETENTION_DAYS: 5
+        run: |
+          set -euo pipefail
+
+          if ! command -v gh >/dev/null 2>&1; then
+            echo "GitHub CLI is required on the runner."
+            exit 1
+          fi
+
+          owner="${OWNER}"
+          repository_name="${REPOSITORY##*/}"
+          package_name="$(echo "${repository_name}" | tr '[:upper:]' '[:lower:]')"
+
+          owner_type="$(gh api "/users/${owner}" --jq '.type')"
+          if [ "${owner_type}" = "Organization" ]; then
+            base_path="/orgs/${owner}"
+          else
+            base_path="/users/${owner}"
+          fi
+
+          versions_endpoint="${base_path}/packages/container/${package_name}/versions"
+          cutoff_epoch="$(date -u -d "${RETENTION_DAYS} days ago" +%s)"
+          cutoff_readable="$(date -u -d "@${cutoff_epoch}" '+%Y-%m-%dT%H:%M:%SZ')"
+
+          echo "Removing container versions for ${package_name} updated before ${cutoff_readable}."
+
+          version_rows="$(gh api "${versions_endpoint}" --paginate --jq '.[] | [.id, .updated_at] | @tsv')"
+
+          if [ -z "${version_rows}" ]; then
+            echo "No versions found; nothing to clean."
+            exit 0
+          fi
+
+          deleted=0
+          preserved=0
+
+          while IFS=$'\t' read -r version_id updated_at; do
+            [ -z "${version_id}" ] && continue
+
+            updated_epoch="$(date -u -d "${updated_at}" +%s)"
+            if [ "${updated_epoch}" -ge "${cutoff_epoch}" ]; then
+              preserved=$((preserved + 1))
+              continue
+            fi
+
+            echo "Deleting version ${version_id} (updated ${updated_at})."
+            gh api -X DELETE "${versions_endpoint}/${version_id}" >/dev/null
+            deleted=$((deleted + 1))
+          done <<< "${version_rows}"
+
+          echo "Deleted ${deleted} version(s); kept ${preserved} newer version(s)."
