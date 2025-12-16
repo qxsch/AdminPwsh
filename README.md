@@ -26,6 +26,7 @@ docker run -it -v '.\:/app' --rm  "ghcr.io/qxsch/adminpwsh:latest"
   * [MicrosoftTeams Module](https://learn.microsoft.com/powershell/module/teams/)
   * [SharePoint Online Management Shell](https://learn.microsoft.com/en-us/powershell/sharepoint/sharepoint-online/connect-sharepoint-online)
   * [PNP.Powershell Module](https://pnp.github.io/powershell/)
+  * [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)
 
 
 ## Helpful function to put into your profile
@@ -48,6 +49,7 @@ function AdminPwsh {
 
 ## Customization - Build your own image
 
+### On Windows with PowerShell
 Create the Dockerfile and build the image with the following commands:
 ```pwsh
 # example: install additional modules
@@ -61,6 +63,22 @@ buildAdminShell.ps1
 # test the newly created image
 docker run -it -v '.\:/app' --rm  "adminpwsh:latest"
 ```
+
+### On Linux with Bash
+Create the Dockerfile and build the image with the following commands:
+```bash
+# example: install additional modules
+./prepareDockerfile.sh --modules "additional.module,another.module"
+
+# modify the Dockerfile as needed
+
+# build the image
+./buildAdminShell.sh
+
+# test the newly created image
+docker run -it -v '.\:/app' --rm  "adminpwsh:latest"
+```
+
 
 ### `prepareDockerfile.ps1` options
 

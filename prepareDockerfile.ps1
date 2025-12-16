@@ -11,6 +11,7 @@ param(
     [switch]$skipModuleExchange,
     [switch]$skipModuleSharePoint,
     [switch]$skipModulePnP,
+    [switch]$skipAzureCLiInstallation,
 
     [switch]$skipOpentofuInstallation
 )
@@ -65,6 +66,13 @@ if(-not $skipModuleAz) {
     $lines += '# install bicep'
     $lines += 'RUN curl -Lo /usr/bin/bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64 && \'
     $lines += '    chmod 755 /usr/bin/bicep'
+}
+
+# install Azure CLI
+if(-not $skipAzureCLiInstallation) {
+    $lines += ''
+    $lines += '# install Azure CLI'
+    $lines += 'RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash'
 }
 
 # install opentofu

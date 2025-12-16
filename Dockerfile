@@ -14,6 +14,9 @@ RUN pwsh -Command '& { Install-Module Az -AllowClobber -Force -SkipPublisherChec
 RUN curl -Lo /usr/bin/bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64 && \
     chmod 755 /usr/bin/bicep
 
+# install Azure CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
 # install opentofu
 RUN curl --proto "=https" --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh && \
     chmod +x install-opentofu.sh && \
