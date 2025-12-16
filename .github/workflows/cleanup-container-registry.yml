@@ -1,6 +1,8 @@
 name: Cleanup Container Registry
 
 on:
+  schedule:
+    - cron: '0 9 1,16 * *'
   workflow_dispatch:
 
 permissions:
@@ -16,7 +18,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OWNER: ${{ github.repository_owner }}
           REPOSITORY: ${{ github.repository }}
-          RETENTION_DAYS: 5
+          RETENTION_DAYS: 14
         run: |
           set -euo pipefail
 
