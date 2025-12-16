@@ -71,14 +71,14 @@ jobs:
           echo "Deleted ${deleted} version(s); kept ${preserved} newer version(s)."
 
           cat <<EOF >>"${GITHUB_STEP_SUMMARY}"
-### Container Cleanup Summary
-- Repository: ${repository_name}
-- Cutoff (UTC): ${cutoff_readable}
+          ### Container Cleanup Summary
+          - Repository: ${repository_name}
+          - Cutoff (UTC): ${cutoff_readable}
 
-| Result | Count |
-| --- | --- |
-| Deleted versions | ${deleted} |
-| Preserved versions | ${preserved} |
+          | Result | Count |
+          | --- | --- |
+          | Deleted versions | ${deleted} |
+          | Preserved versions | ${preserved} |
 
-> Deleted ${deleted} version(s); kept ${preserved} newer version(s).
-EOF
+          > Deleted ${deleted} version(s); kept ${preserved} newer version(s).
+          EOF
